@@ -1,77 +1,63 @@
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <sstream>
-#include <numeric>
 #include <string>
-#include <vector>
 
-// very undescriptive class and member names, sorry (i haven't done any coding in ages) :ppone:
-class CaloriesContainer {
-    std::vector<int> calorie_sums;
+std::ifstream input_f("src/Day 2/input");
 
-    void remove_smallest() {
-        // Remove the smallest sum stored
-        struct {
-            std::vector<int>::iterator element;
-            int value = 0;
-        } smallest;
-
-        for (std::vector<int>::iterator it = calorie_sums.begin(); it != calorie_sums.end(); ) {
-            if (smallest.value > *it) {
-                smallest.value = *it;
-                smallest.element = it++;
-            }
-        }
-        calorie_sums.erase(smallest.element);
-
-        //if (calorie_sums.size() >= 3)
-        //    throw;
+int calculate_score(char opponent_move, char your_strat) {
+    // Choose what you have to do
+    int your_move;
+    switch (your_strat) {
+        case 'X': // Lose
+            switch (opponent_move) {
+                case 'A': // Rock
+                    your_move = 'Z'; break;
+                case 'B': // Paper
+                    your_move = 'X'; break;
+                case 'C': // Scissors
+                    your_move = 'Y'; break;
+            } break;
+        case 'Y': // Draw
+            your_move = (opponent_move - 'A') + 'X'; break;
+        case 'Z': // Win
+            switch (opponent_move) {
+                case 'A': // Rock
+                    your_move = 'Y'; break;
+                case 'B': // Paper
+                    your_move = 'Z'; break;
+                case 'C': // Scissors
+                    your_move = 'X'; break;
+            } break;
     }
 
-public:
-    void add_sum(int input_sum) {
-        if (calorie_sums.size() < 3) {
-            calorie_sums.push_back(input_sum);
-            return;
-        }
-
-        // Add the input sum if it's any bigger than the current stored ones (i guess i could also use std::for_each?)
-        for (int stored_sum : calorie_sums) {
-            if (input_sum >= stored_sum) {
-                calorie_sums.push_back(input_sum);
-            }
-        }
-
-        if (calorie_sums.size() <= 3)
-            return;
-
-        remove_smallest();
+    // Points for outcome of round
+    int outcome_points;
+    signed int outcome = (opponent_move - 'A' + 1) - (your_move - 'X' + 1);
+    if (outcome == 0) { //Draw
+        outcome_points = 3;
+    } else {
+        if (opponent_move == 'A' and your_move == 'Y' or // Rock vs paper
+            opponent_move == 'B' and your_move == 'Z' or // Paper vs Scissors
+            opponent_move == 'C' and your_move == 'X'    // Scissors vs Rock
+        ) // Win
+            outcome_points = 6;
+        else // Lose
+            outcome_points = 0;
     }
 
-    int get_sum() {
-        return std::accumulate(calorie_sums.begin(), calorie_sums.end(), 0);
-    }
-};
-
-std::ifstream input_f("src/Day 1/input");
+    return outcome_points + (your_move - 'X' + 1);
+}
 
 int main(int argc, char** argv) {
-    CaloriesContainer biggest_calories;
+    int score = 0;
 
     for (std::string line; std::getline(input_f, line); ) {
-        static int current_addition = 0;
-
-        if (not line.empty()) {
-            std::istringstream line_strm(line);
-            int number;
-            line_strm >> number;
-            current_addition += number;
-        } else {
-            biggest_calories.add_sum(current_addition);
-            current_addition = 0;
-        }
+        std::istringstream stream(line);
+        char opponent_move, your_strat;
+        stream >> opponent_move >> your_strat;
+        score += calculate_score(opponent_move, your_strat);
     }
-    std::cout << "The 3 elves with the most Calories have " << biggest_calories.get_sum() << " Calories in total" << std::endl;
+    std::cout << "Your total score is " << score << std::endl;
     return 0;
 }

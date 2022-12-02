@@ -1,63 +1,39 @@
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <sstream>
-#include <numeric>
 #include <string>
-#include <vector>
 
 // very undescriptive class and member names, sorry (i haven't done any coding in ages) :ppone:
-class CaloriesContainer {
-    std::vector<int> calorie_sums;
-
-    void remove_smallest() {
-        // Remove the smallest sum stored
-        struct {
-            std::vector<int>::iterator element;
-            int value = 0;
-        } smallest;
-
-        for (std::vector<int>::iterator it = calorie_sums.begin(); it != calorie_sums.end(); ) {
-            if (smallest.value > *it) {
-                smallest.value = *it;
-                smallest.element = it++;
-            }
-        }
-        calorie_sums.erase(smallest.element);
-
-        //if (calorie_sums.size() >= 3)
-        //    throw;
-    }
+class TopCaloriesContainer {
+    int calorie_sums[3] = {0,0,0}; // easier without an std::vector
 
 public:
     void add_sum(int input_sum) {
-        if (calorie_sums.size() < 3) {
-            calorie_sums.push_back(input_sum);
-            return;
-        }
-
         // Add the input sum if it's any bigger than the current stored ones (i guess i could also use std::for_each?)
-        for (int stored_sum : calorie_sums) {
-            if (input_sum >= stored_sum) {
-                calorie_sums.push_back(input_sum);
+        struct {
+            int index = 0;
+            int value = 0;
+        } smallest;
+
+        for (int i = 0; i < sizeof(calorie_sums)/sizeof(calorie_sums[0]); ++i) {
+            if (i == 0 or smallest.value >= calorie_sums[i]) {
+                smallest.value = calorie_sums[i];
+                smallest.index = i;
             }
         }
-
-        if (calorie_sums.size() <= 3)
-            return;
-
-        remove_smallest();
+        if (smallest.value < input_sum)
+            calorie_sums[smallest.index] = input_sum;
     }
 
     int get_sum() {
-        return std::accumulate(calorie_sums.begin(), calorie_sums.end(), 0);
+        return calorie_sums[0] + calorie_sums[1] + calorie_sums[2];
     }
 };
 
 std::ifstream input_f("src/Day 1/input");
 
 int main(int argc, char** argv) {
-    CaloriesContainer biggest_calories;
+    TopCaloriesContainer biggest_calories;
 
     for (std::string line; std::getline(input_f, line); ) {
         static int current_addition = 0;
